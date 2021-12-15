@@ -6,7 +6,11 @@ BULLET_SPEED = 25 # 25px
 GAME_PACE = 300 # 300ms
 MOVE_STEP_SIZE = 15 # 10px
 INVADER_SIZE = 25 # 25px
+INVADER_SPACING = 25 # 25px
+INVADER_SPEED = 5 # 5px
 INVADER_START_OFFSET = 100 # 100px
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 800
 bullets = []
 invaders = []
 
@@ -33,9 +37,9 @@ class Bullet:
         self.graphic.move(0, -BULLET_SPEED)
 
 class Invader:
-    alive = False
-    x = 0
-    y = 0
+    alive: bool = False
+    x: int = 0
+    y: int = 0
     graphic: Rectangle
 
     def __init__(self, x, y):
@@ -46,6 +50,45 @@ class Invader:
       graphic.setFill('blue')
       self.graphic = graphic
       self.alive = True
+
+class InvaderFleet:
+    direction: int = INVADER_SPEED
+    fleet_offset: int = INVADER_START_OFFSET
+    invaders = []
+    invader_rows: int = 0
+    invader_num_per_row: int = 0
+
+    def __init__(self, rows: int, num_per_row: int):
+        self.invader_rows = rows
+        self.invader_num_per_row = num_per_row
+        self.make_invaders()
+
+    def make_invaders(self):
+        for y in range(self.invader_rows):
+            self.invaders.append([])
+            for x in range(self.invader_num_per_row):
+                invader_x = INVADER_START_OFFSET + x * (INVADER_SIZE + INVADER_SPACING)
+                invader_y = INVADER_START_OFFSET + y * (INVADER_SIZE + INVADER_SPACING)
+                invader = Invader(invader_x, invader_y)
+                self.invaders[y].append(invader)
+
+    def draw_invaders(self, win):
+        for row in self.invaders:
+            for invader in row:
+                invader.graphic.draw(win)
+
+    def move_invaders(self):
+        invader_right_edge = self.fleet_offset + self.invader_num_per_row * (INVADER_SIZE + self.direction)
+        # Check if invaders are at right edge
+        if invader_right_edge > WINDOW_WIDTH - INVADER_START_OFFSET:
+            self.direction = -INVADER_SPEED
+        # Check if invaders are at left edge
+
+        for y in range(self.invader_rows):
+            for x in range(self.invader_num_per_row):
+                self.invaders[y][x].x += self.direction
+                self.invaders[y][x].graphic.move(self.direction, 0)
+        self.fleet_offset += INVADER_SPACING
 
 class Ship:
     alive = True
@@ -66,35 +109,22 @@ class Ship:
         self.y = self.y + offset_y
         self.graphic.move(offset_x, offset_y)
 
-def make_invaders(rows: int, num_per_row: int):
-    for y in range(rows):
-        invaders.append([])
-        for x in range(num_per_row):
-            invader_x = INVADER_START_OFFSET + x * (INVADER_SIZE + 10)
-            invader_y = INVADER_START_OFFSET + y * (INVADER_SIZE + 10)
-            invader = Invader(invader_x, invader_y)
-            invaders[y].append(invader)
-
-def draw_invaders(win):
-    for row in invaders:
-        for invader in row:
-            invader.graphic.draw(win)
-
 ship = Ship(600, 600)
 def main():
-    win = GraphWin('Space Invaders', 1200, 800)
+    win = GraphWin('Space Invaders', WINDOW_WIDTH, WINDOW_HEIGHT)
 
     # Draw the ship
     ship.draw(win)  
 
     # Draw the invaders
-    make_invaders(8, 20)
-    draw_invaders(win)
+    fleet = InvaderFleet(6, 10)
+    fleet.draw_invaders(win)
 
     # Initialize time
     last_time = time.time()
     while True:
         # Move cycle
+        # Bullets move
         current_time = time.time()
         if current_time - GAME_PACE < last_time:
             # Move bullets
@@ -103,6 +133,9 @@ def main():
                 if bullet.y < 0:
                     bullet.remove()
                     bullets.remove(bullet)
+        # Invaders moving
+        if current_time - GAME_PACE * 3 < last_time:
+            fleet.move_invaders()
 
         k = win.checkKey()
 
