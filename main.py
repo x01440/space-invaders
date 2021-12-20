@@ -4,11 +4,11 @@ import pygame
 import sys
 import time
 
-BULLET_SPEED = 6 # 6px
+BULLET_SPEED = 8 # 8px
 GAME_PACE = 0.1 # move every half second
 INVADER_SIZE = 25 # 25px
 INVADER_SPACING = 25 # 25px
-INVADER_SPEED = 1 # 1px
+INVADER_SPEED = 2 # 1px
 INVADER_START_OFFSET = 100 # 100px
 SHIP_BOUNDARY = 500
 SHIP_SPEED = 5 # 5px
@@ -47,17 +47,32 @@ class Invader:
     x: int = 0
     y: int = 0
     window = None
+    point_value: int = 100
+    image_switch_time = 1 # Switch once per second
+    current_image_shown: int
+    last_timer: int = 0
+    images = []
 
-    def __init__(self, window, x: int, y: int):
+    def __init__(self, window, x: int, y: int, images):
         self.x = x
         self.y = y
         self.window = window
-        pygame.draw.rect(self.window, COLOR_BLUE, (self.x, self.y, 25, 25))
+        self.images = images
+        self.last_timer = time.time()
+        self.current_image_shown = 0
+        self.window.blit(self.images[0], (self.x, self.y))
         self.alive = True
 
     def move(self):
         if self.alive:
-            pygame.draw.rect(self.window, COLOR_BLUE, (self.x, self.y, 25, 25))
+            # Move and switch image on the schedule set for this invader
+            current_time = time.time()
+            if current_time - self.image_switch_time > self.last_timer:
+                self.current_image_shown += 1
+                if self.current_image_shown == len(self.images):
+                    self.current_image_shown = 0
+                self.last_timer = current_time
+            self.window.blit(self.images[self.current_image_shown], (self.x, self.y))
 
     def explode(self):
         # Do explosion effect
@@ -66,6 +81,7 @@ class Invader:
 class InvaderFleet:
     direction: int = INVADER_SPEED
     fleet_offset: int = INVADER_START_OFFSET
+    images = []
     invaders = []
     invader_rows: int = 0
     invader_num_per_row: int = 0
@@ -74,6 +90,10 @@ class InvaderFleet:
     def __init__(self, window, rows: int, num_per_row: int):
         self.invader_rows = rows
         self.invader_num_per_row = num_per_row
+        self.images.append(pygame.image.load(os.path.join('img', 'invader1-1.png')))
+        self.images.append(pygame.image.load(os.path.join('img', 'invader1-2.png')))
+        self.images[0] = pygame.transform.scale(self.images[0], (25, 25))
+        self.images[1] = pygame.transform.scale(self.images[1], (25, 25))
         self.window = window
         self.make_invaders()
 
@@ -83,7 +103,7 @@ class InvaderFleet:
             for x in range(self.invader_num_per_row):
                 invader_x = INVADER_START_OFFSET + x * (INVADER_SIZE + INVADER_SPACING)
                 invader_y = INVADER_START_OFFSET + y * (INVADER_SIZE + INVADER_SPACING)
-                invader = Invader(self.window, invader_x, invader_y)
+                invader = Invader(self.window, invader_x, invader_y, self.images)
                 self.invaders[y].append(invader)
 
     def check_invader_hit(self, x1, x2, y1, y2):
@@ -99,7 +119,7 @@ class InvaderFleet:
         return is_hit
 
     def move_invaders(self):
-        invader_right_edge = self.fleet_offset + self.invader_num_per_row * (INVADER_SIZE + self.direction)
+        invader_right_edge = self.fleet_offset + self.invader_num_per_row * (INVADER_SIZE + INVADER_SPACING)
         invader_left_edge = self.fleet_offset
         # Check if invaders are at right edge
         if invader_right_edge > WINDOW_WIDTH - INVADER_START_OFFSET:
@@ -119,13 +139,16 @@ class Ship:
     alive = True
     x = 0
     y = 0
+    ship_image = None
     window = None
 
     def __init__(self, window, x, y):
         self.window = window
         self.x = x
         self.y = y
-        pygame.draw.circle(self.window, COLOR_RED, (self.x, self.y), 25)
+        self.ship_image = pygame.image.load(os.path.join('img', 'ship.png'))
+        self.ship_image = pygame.transform.scale(self.ship_image, (40, 40))
+        self.window.blit(self.ship_image, (self.x, self.y))
 
     def move(self, offset_x, offset_y):
         self.x = self.x + offset_x
@@ -135,7 +158,7 @@ class Ship:
         self.draw()
 
     def draw(self):
-        pygame.draw.circle(self.window, COLOR_RED, (self.x, self.y), 25)
+        self.window.blit(self.ship_image, (self.x, self.y))
 
 def check_invader_hit(fleet: InvaderFleet):
     bullet_to_remove = None
@@ -169,7 +192,7 @@ def execute_input(window, ship: Ship, bullets):
     if keys[pygame.K_SPACE]:
             # Start bullet
             if (len(bullets) < 2):
-                bullet = Bullet(window, ship.x, ship.y - 20, BULLET_SPEED)
+                bullet = Bullet(window, ship.x + 20, ship.y - 20, BULLET_SPEED)
                 bullets.append(bullet)
 
     # Quit key check
