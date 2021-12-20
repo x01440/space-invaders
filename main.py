@@ -1,5 +1,4 @@
-from numpy import true_divide
-from graphics import *
+import os
 import pygame
 import sys
 import time
