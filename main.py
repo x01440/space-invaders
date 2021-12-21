@@ -3,16 +3,17 @@ import pygame
 import sys
 import time
 
-BULLET_SPEED = 8 # 8px
-GAME_PACE = 0.1 # move every half second
-INVADER_SIZE = 25 # 25px
-INVADER_SPACING = 25 # 25px
-INVADER_SPEED = 2 # 1px
-INVADER_START_OFFSET = 100 # 100px
-SHIP_BOUNDARY = 500
-SHIP_SPEED = 5 # 5px
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 800
+BULLET_SPEED = 20 # px
+GAME_PACE = 0.1 # sec
+INVADER_SIZE = 25 # px
+INVADER_SPACING = 25 # px
+INVADER_SPEED = 2 # px
+INVADER_START_OFFSET = 100 # px
+SHIP_BOUNDARY = 500 # px
+SHIP_FIRE_DELAY = 0.3 # sec
+SHIP_SPEED = 8 # px
+WINDOW_WIDTH = 1200 # px
+WINDOW_HEIGHT = 800 # px
 
 # Pygame colors
 COLOR_BLACK = (0,0,0)
@@ -21,7 +22,15 @@ COLOR_GREEN = (0, 255, 0)
 COLOR_RED = (255, 0, 0)
 COLOR_WHITE = (255,255,255)
 
-bullets = []
+# Global values
+BULLET_ID = 'bullet_id'
+LAST_FIRE_TIME = 'last_fire_time'
+
+bullets = {}
+globals = {
+    BULLET_ID: 0,
+    LAST_FIRE_TIME: 0
+}
 invaders = []
 
 class Bullet:
@@ -30,16 +39,26 @@ class Bullet:
     speed: int = 0
     window = None
 
-    def __init__(self, window, x, y, speed):
+    def __init__(self, window, x, y, speed, id):
+        self.id = id
         self.x = x
         self.y = y
         self.speed = speed
         self.window = window
-        pygame.draw.rect(self.window, COLOR_GREEN, (self.x - 5, self.y - 5, 10, 20))
+        pygame.draw.rect(self.window, COLOR_GREEN, self.getBulletRectangleDimensions())
 
     def move(self):
         self.y -= BULLET_SPEED
-        pygame.draw.rect(self.window, COLOR_GREEN, (self.x - 5, self.y - 5, 10, 20))
+        pygame.draw.rect(self.window, COLOR_GREEN, self.getBulletRectangleDimensions())
+
+    def getBulletRectangleDimensions(self):
+        return (self.x - 5, self.y - 10, 10, 20)
+
+    def getBulletBoundaries(self):
+        return (self.x - 5, self.y - 10, self.x + 5, self.y + 10)
+
+    def getBulletBottomEdge(self):
+        return self.y + 10
 
 class Invader:
     alive: bool = False
@@ -105,7 +124,8 @@ class InvaderFleet:
                 invader = Invader(self.window, invader_x, invader_y, self.images)
                 self.invaders[y].append(invader)
 
-    def check_invader_hit(self, x1, x2, y1, y2):
+    def check_invader_hit(self, boundaries: tuple):
+        x1, y1, x2, y2 = boundaries
         is_hit = False
         for y in range(self.invader_rows):
             for x in range(self.invader_num_per_row):
@@ -160,13 +180,15 @@ class Ship:
         self.window.blit(self.ship_image, (self.x, self.y))
 
 def check_invader_hit(fleet: InvaderFleet):
+    if len(bullets) == 0:
+        return
     bullet_to_remove = None
-    for b in bullets:
-        if fleet.check_invader_hit(b.x - 5, b.x + 5, b.y, b.y + 20):
+    for id in bullets:
+        if fleet.check_invader_hit(bullets[id].getBulletBoundaries()):
             print('Bullet Hit!')
-            bullet_to_remove = b
-    if bullet_to_remove:
-        bullets.remove(b)
+            bullet_to_remove = id
+    if bullet_to_remove is not None:
+        bullets.pop(bullet_to_remove)
 
 def execute_input(window, ship: Ship, bullets):
     for event in pygame.event.get():
@@ -189,10 +211,14 @@ def execute_input(window, ship: Ship, bullets):
 
     # Firing key checks, can happen at the same time as movement
     if keys[pygame.K_SPACE]:
-            # Start bullet
-            if (len(bullets) < 2):
-                bullet = Bullet(window, ship.x + 20, ship.y - 20, BULLET_SPEED)
-                bullets.append(bullet)
+            # Start bullet, debounce fire to only fire one bullet
+            current_time = time.time()
+            if (len(bullets) < 2) and (current_time - globals[LAST_FIRE_TIME] > SHIP_FIRE_DELAY):
+                globals[LAST_FIRE_TIME] = time.time()
+                globals[BULLET_ID] += 1
+                bullet_id = globals[BULLET_ID]
+                bullet = Bullet(window, ship.x + 20, ship.y - 20, BULLET_SPEED, bullet_id)
+                bullets[bullet_id] = bullet
 
     # Quit key check
     if keys[pygame.K_q]:
@@ -225,14 +251,15 @@ def main():
             execute_input(window, ship, bullets)
 
             # Move bullets
-            for bullet in bullets:
-                bullet.move()
-                if bullet.y < 0:
+            for id in bullets:
+                bullets[id].move()
+                if bullets[id].getBulletBottomEdge() < 0:
                     # No need to undraw, bullet will disappear
-                    bullets.remove(bullet)
+                    bullets.pop(id)
 
             # If bullet hits an invader, then the invader disappears
-            check_invader_hit(fleet)
+            if len(bullets) > 0:
+                check_invader_hit(fleet)
 
             # Move invaders
             fleet.move_invaders()
