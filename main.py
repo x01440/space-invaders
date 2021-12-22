@@ -9,6 +9,7 @@ INVADER_SIZE = 25 # px
 INVADER_SPACING = 25 # px
 INVADER_SPEED = 2 # px
 INVADER_START_OFFSET = 100 # px
+INVADER_VERTICAL_MOVE = 20 # px
 SHIP_BOUNDARY = 500 # px
 SHIP_FIRE_DELAY = 0.3 # sec
 SHIP_SPEED = 8 # px
@@ -138,18 +139,24 @@ class InvaderFleet:
         return is_hit
 
     def move_invaders(self):
+        vertical_move = 0
         invader_right_edge = self.fleet_offset + self.invader_num_per_row * (INVADER_SIZE + INVADER_SPACING)
         invader_left_edge = self.fleet_offset
+
+        # If invaders change direction, move them down
         # Check if invaders are at right edge
         if invader_right_edge > WINDOW_WIDTH - INVADER_START_OFFSET:
             self.direction = -INVADER_SPEED
+            vertical_move = INVADER_VERTICAL_MOVE
         # Check if invaders are at left edge
         if invader_left_edge < INVADER_START_OFFSET:
             self.direction = INVADER_SPEED
+            vertical_move = INVADER_VERTICAL_MOVE
 
         for y in range(self.invader_rows):
             for x in range(self.invader_num_per_row):
                 self.invaders[y][x].x += self.direction
+                self.invaders[y][x].y += vertical_move
                 self.invaders[y][x].move()
         # Move the whole fleet
         self.fleet_offset += self.direction
@@ -251,11 +258,14 @@ def main():
             execute_input(window, ship, bullets)
 
             # Move bullets
+            id_to_remove = None
             for id in bullets:
                 bullets[id].move()
                 if bullets[id].getBulletBottomEdge() < 0:
                     # No need to undraw, bullet will disappear
-                    bullets.pop(id)
+                    id_to_remove = id
+            if id_to_remove is not None:
+                bullets.pop(id_to_remove)
 
             # If bullet hits an invader, then the invader disappears
             if len(bullets) > 0:
