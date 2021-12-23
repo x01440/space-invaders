@@ -25,11 +25,13 @@ COLOR_WHITE = (255,255,255)
 
 # Global values
 BULLET_ID = 'bullet_id'
+GAME_SCORE = 'game_score'
 LAST_FIRE_TIME = 'last_fire_time'
 
 bullets = {}
 globals = {
     BULLET_ID: 0,
+    GAME_SCORE: 0,
     LAST_FIRE_TIME: 0
 }
 invaders = []
@@ -63,14 +65,14 @@ class Bullet:
 
 class Invader:
     alive: bool = False
+    current_image_shown: int
+    images = []
+    image_switch_time = 1 # Switch once per second
+    last_timer: int = 0
+    point_value: int = 100
+    window = None
     x: int = 0
     y: int = 0
-    window = None
-    point_value: int = 100
-    image_switch_time = 1 # Switch once per second
-    current_image_shown: int
-    last_timer: int = 0
-    images = []
 
     def __init__(self, window, x: int, y: int, images):
         self.x = x
@@ -125,18 +127,18 @@ class InvaderFleet:
                 invader = Invader(self.window, invader_x, invader_y, self.images)
                 self.invaders[y].append(invader)
 
-    def check_invader_hit(self, boundaries: tuple):
+    def check_invader_hit(self, boundaries: tuple) -> Invader:
         x1, y1, x2, y2 = boundaries
-        is_hit = False
+        invader_hit = None
         for y in range(self.invader_rows):
             for x in range(self.invader_num_per_row):
                 invader = self.invaders[y][x]
                 if ((x1 > invader.x and x1 < invader.x + 25) or (x2 > invader.x and x2 < invader.x + 25)):
                     if ((y1 > invader.y and y1 < invader.y + 25) or (y2 > invader.y and y2 < invader.y + 25)):
                         if invader.alive == True:
-                            is_hit = True
+                            invader_hit = invader
                             invader.explode()
-        return is_hit
+        return invader_hit
 
     def move_invaders(self):
         vertical_move = 0
@@ -191,8 +193,10 @@ def check_invader_hit(fleet: InvaderFleet):
         return
     bullet_to_remove = None
     for id in bullets:
-        if fleet.check_invader_hit(bullets[id].getBulletBoundaries()):
+        invader_hit = fleet.check_invader_hit(bullets[id].getBulletBoundaries())
+        if invader_hit:
             print('Bullet Hit!')
+            globals[GAME_SCORE] += invader_hit.point_value
             bullet_to_remove = id
     if bullet_to_remove is not None:
         bullets.pop(bullet_to_remove)
@@ -232,8 +236,16 @@ def execute_input(window, ship: Ship, bullets):
             pygame.quit()
             sys.exit()
 
+def draw_score(window):
+    font = pygame.font.Font('freesansbold.ttf', 32)
+
+    # Render the score
+    text = font.render('Score: ' + str(globals[GAME_SCORE]), True, COLOR_BLUE, COLOR_WHITE)
+    window.blit(text, (10,20))
+
 def main():
     window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+    pygame.display.set_caption('Mike and Parker Space Invaders')
     pygame.init()
 
     # Initialize and draw objects
@@ -276,6 +288,9 @@ def main():
 
             # Refresh ship
             ship.draw()
+
+            # Draw the score
+            draw_score(window)
 
             last_time = current_time
             pygame.display.update()
