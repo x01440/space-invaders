@@ -163,10 +163,29 @@ class InvaderFleet:
         # Move the whole fleet
         self.fleet_offset += self.direction
 
+class Score:
+    font: pygame.font.Font
+    number_ships: int = 0
+    score: int = 0
+    window = None
+    x: int = 0
+    y: int = 0
+
+    def __init__(self, window, x, y):
+        self.font = pygame.font.Font('freesansbold.ttf', 32)
+        self.window = window
+        self.x = x
+        self.y = y
+
+    def draw(self):
+        # Render the score
+        text = self.font.render('Score: ' + str(globals[GAME_SCORE]), True, COLOR_BLUE, COLOR_WHITE)
+        self.window.blit(text, (self.x, self.y))
+
 class Ship:
-    alive = True
-    x = 0
-    y = 0
+    alive: bool = True
+    x: int = 0
+    y: int = 0
     ship_image = None
     window = None
 
@@ -236,13 +255,6 @@ def execute_input(window, ship: Ship, bullets):
             pygame.quit()
             sys.exit()
 
-def draw_score(window):
-    font = pygame.font.Font('freesansbold.ttf', 32)
-
-    # Render the score
-    text = font.render('Score: ' + str(globals[GAME_SCORE]), True, COLOR_BLUE, COLOR_WHITE)
-    window.blit(text, (10,20))
-
 def main():
     window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
     pygame.display.set_caption('Mike and Parker Space Invaders')
@@ -255,6 +267,9 @@ def main():
 
     # Draw the invaders
     fleet = InvaderFleet(window, 6, 10)
+
+    # Init the score
+    score = Score(window, 10, 20)
 
     # Initialize time
     last_time = time.time()
@@ -290,7 +305,7 @@ def main():
             ship.draw()
 
             # Draw the score
-            draw_score(window)
+            score.draw()
 
             last_time = current_time
             pygame.display.update()
