@@ -2,6 +2,8 @@ import os
 import pygame
 import sys
 import time
+
+# Local imports
 import constants
 
 bullets = {}
@@ -46,6 +48,7 @@ class Invader:
     image_switch_time = 1 # Switch once per second
     last_timer: int = 0
     point_value: int = 100
+    vertical_size: int = 25
     window = None
     x: int = 0
     y: int = 0
@@ -82,6 +85,7 @@ class InvaderFleet:
     invaders = []
     invader_rows: int = 0
     invader_num_per_row: int = 0
+    invaders_win = False
     window = None
 
     def __init__(self, window, rows: int, num_per_row: int):
@@ -126,6 +130,7 @@ class InvaderFleet:
         if invader_right_edge > constants.WINDOW_WIDTH - constants.INVADER_START_OFFSET:
             self.direction = -constants.INVADER_SPEED
             vertical_move = constants.INVADER_VERTICAL_MOVE
+
         # Check if invaders are at left edge
         if invader_left_edge < constants.INVADER_START_OFFSET:
             self.direction = constants.INVADER_SPEED
@@ -136,8 +141,13 @@ class InvaderFleet:
                 self.invaders[y][x].x += self.direction
                 self.invaders[y][x].y += vertical_move
                 self.invaders[y][x].move()
+                self.invaders_win = self.check_invader_win(self.invaders[y][x])
         # Move the whole fleet
         self.fleet_offset += self.direction
+
+    def check_invader_win(self, invader: Invader):
+        invader_win = True if invader.y + invader.vertical_size >= constants.WIN_GAME_HEIGHT else False
+        return invader_win
 
 class Score:
     font: pygame.font.Font
