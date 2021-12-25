@@ -1,0 +1,24 @@
+BULLET_SPEED = 20 # px
+GAME_PACE = 0.1 # sec
+INVADER_SIZE = 25 # px
+INVADER_SPACING = 25 # px
+INVADER_SPEED = 2 # px
+INVADER_START_OFFSET = 100 # px
+INVADER_VERTICAL_MOVE = 20 # px
+SHIP_BOUNDARY = 500 # px
+SHIP_FIRE_DELAY = 0.3 # sec
+SHIP_SPEED = 8 # px
+WINDOW_WIDTH = 1200 # px
+WINDOW_HEIGHT = 800 # px
+
+# Pygame colors
+COLOR_BLACK = (0,0,0)
+COLOR_BLUE = (0, 0, 255)
+COLOR_GREEN = (0, 255, 0)
+COLOR_RED = (255, 0, 0)
+COLOR_WHITE = (255,255,255)
+
+# Global values
+BULLET_ID = 'bullet_id'
+GAME_SCORE = 'game_score'
+LAST_FIRE_TIME = 'last_fire_time'

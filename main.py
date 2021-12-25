@@ -2,37 +2,13 @@ import os
 import pygame
 import sys
 import time
-
-BULLET_SPEED = 20 # px
-GAME_PACE = 0.1 # sec
-INVADER_SIZE = 25 # px
-INVADER_SPACING = 25 # px
-INVADER_SPEED = 2 # px
-INVADER_START_OFFSET = 100 # px
-INVADER_VERTICAL_MOVE = 20 # px
-SHIP_BOUNDARY = 500 # px
-SHIP_FIRE_DELAY = 0.3 # sec
-SHIP_SPEED = 8 # px
-WINDOW_WIDTH = 1200 # px
-WINDOW_HEIGHT = 800 # px
-
-# Pygame colors
-COLOR_BLACK = (0,0,0)
-COLOR_BLUE = (0, 0, 255)
-COLOR_GREEN = (0, 255, 0)
-COLOR_RED = (255, 0, 0)
-COLOR_WHITE = (255,255,255)
-
-# Global values
-BULLET_ID = 'bullet_id'
-GAME_SCORE = 'game_score'
-LAST_FIRE_TIME = 'last_fire_time'
+import constants
 
 bullets = {}
 globals = {
-    BULLET_ID: 0,
-    GAME_SCORE: 0,
-    LAST_FIRE_TIME: 0
+    constants.BULLET_ID: 0,
+    constants.GAME_SCORE: 0,
+    constants.LAST_FIRE_TIME: 0
 }
 invaders = []
 
@@ -48,11 +24,11 @@ class Bullet:
         self.y = y
         self.speed = speed
         self.window = window
-        pygame.draw.rect(self.window, COLOR_GREEN, self.getBulletRectangleDimensions())
+        pygame.draw.rect(self.window, constants.COLOR_GREEN, self.getBulletRectangleDimensions())
 
     def move(self):
-        self.y -= BULLET_SPEED
-        pygame.draw.rect(self.window, COLOR_GREEN, self.getBulletRectangleDimensions())
+        self.y -= constants.BULLET_SPEED
+        pygame.draw.rect(self.window, constants.COLOR_GREEN, self.getBulletRectangleDimensions())
 
     def getBulletRectangleDimensions(self):
         return (self.x - 5, self.y - 10, 10, 20)
@@ -100,8 +76,8 @@ class Invader:
         self.alive = False
 
 class InvaderFleet:
-    direction: int = INVADER_SPEED
-    fleet_offset: int = INVADER_START_OFFSET
+    direction: int = constants.INVADER_SPEED
+    fleet_offset: int = constants.INVADER_START_OFFSET
     images = []
     invaders = []
     invader_rows: int = 0
@@ -122,8 +98,8 @@ class InvaderFleet:
         for y in range(self.invader_rows):
             self.invaders.append([])
             for x in range(self.invader_num_per_row):
-                invader_x = INVADER_START_OFFSET + x * (INVADER_SIZE + INVADER_SPACING)
-                invader_y = INVADER_START_OFFSET + y * (INVADER_SIZE + INVADER_SPACING)
+                invader_x = constants.INVADER_START_OFFSET + x * (constants.INVADER_SIZE + constants.INVADER_SPACING)
+                invader_y = constants.INVADER_START_OFFSET + y * (constants.INVADER_SIZE + constants.INVADER_SPACING)
                 invader = Invader(self.window, invader_x, invader_y, self.images)
                 self.invaders[y].append(invader)
 
@@ -142,18 +118,18 @@ class InvaderFleet:
 
     def move_invaders(self):
         vertical_move = 0
-        invader_right_edge = self.fleet_offset + self.invader_num_per_row * (INVADER_SIZE + INVADER_SPACING)
+        invader_right_edge = self.fleet_offset + self.invader_num_per_row * (constants.INVADER_SIZE + constants.INVADER_SPACING)
         invader_left_edge = self.fleet_offset
 
         # If invaders change direction, move them down
         # Check if invaders are at right edge
-        if invader_right_edge > WINDOW_WIDTH - INVADER_START_OFFSET:
-            self.direction = -INVADER_SPEED
-            vertical_move = INVADER_VERTICAL_MOVE
+        if invader_right_edge > constants.WINDOW_WIDTH - constants.INVADER_START_OFFSET:
+            self.direction = -constants.INVADER_SPEED
+            vertical_move = constants.INVADER_VERTICAL_MOVE
         # Check if invaders are at left edge
-        if invader_left_edge < INVADER_START_OFFSET:
-            self.direction = INVADER_SPEED
-            vertical_move = INVADER_VERTICAL_MOVE
+        if invader_left_edge < constants.INVADER_START_OFFSET:
+            self.direction = constants.INVADER_SPEED
+            vertical_move = constants.INVADER_VERTICAL_MOVE
 
         for y in range(self.invader_rows):
             for x in range(self.invader_num_per_row):
@@ -179,7 +155,7 @@ class Score:
 
     def draw(self):
         # Render the score
-        text = self.font.render('Score: ' + str(globals[GAME_SCORE]), True, COLOR_BLUE, COLOR_WHITE)
+        text = self.font.render('Score: ' + str(globals[constants.GAME_SCORE]), True, constants.COLOR_BLUE, constants.COLOR_WHITE)
         self.window.blit(text, (self.x, self.y))
 
 class Ship:
@@ -200,7 +176,7 @@ class Ship:
     def move(self, offset_x, offset_y):
         self.x = self.x + offset_x
         # Don't let the ship go into the invader fleet
-        if (self.y + offset_y > SHIP_BOUNDARY):
+        if (self.y + offset_y > constants.SHIP_BOUNDARY):
             self.y = self.y + offset_y
         self.draw()
 
@@ -215,7 +191,7 @@ def check_invader_hit(fleet: InvaderFleet):
         invader_hit = fleet.check_invader_hit(bullets[id].getBulletBoundaries())
         if invader_hit:
             print('Bullet Hit!')
-            globals[GAME_SCORE] += invader_hit.point_value
+            globals[constants.GAME_SCORE] += invader_hit.point_value
             bullet_to_remove = id
     if bullet_to_remove is not None:
         bullets.pop(bullet_to_remove)
@@ -231,23 +207,23 @@ def execute_input(window, ship: Ship, bullets):
     # Movement key check
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
-            ship.move(-SHIP_SPEED, 0)
+            ship.move(-constants.SHIP_SPEED, 0)
     elif keys[pygame.K_RIGHT]:
-        ship.move(SHIP_SPEED, 0)
+        ship.move(constants.SHIP_SPEED, 0)
     elif keys[pygame.K_UP]:
-        ship.move(0, -SHIP_SPEED)
+        ship.move(0, -constants.SHIP_SPEED)
     elif keys[pygame.K_DOWN]:
-        ship.move(0, SHIP_SPEED)
+        ship.move(0, constants.SHIP_SPEED)
 
     # Firing key checks, can happen at the same time as movement
     if keys[pygame.K_SPACE]:
             # Start bullet, debounce fire to only fire one bullet
             current_time = time.time()
-            if (len(bullets) < 2) and (current_time - globals[LAST_FIRE_TIME] > SHIP_FIRE_DELAY):
-                globals[LAST_FIRE_TIME] = time.time()
-                globals[BULLET_ID] += 1
-                bullet_id = globals[BULLET_ID]
-                bullet = Bullet(window, ship.x + 20, ship.y - 20, BULLET_SPEED, bullet_id)
+            if (len(bullets) < 2) and (current_time - globals[constants.LAST_FIRE_TIME] > constants.SHIP_FIRE_DELAY):
+                globals[constants.LAST_FIRE_TIME] = time.time()
+                globals[constants.BULLET_ID] += 1
+                bullet_id = globals[constants.BULLET_ID]
+                bullet = Bullet(window, ship.x + 20, ship.y - 20, constants.BULLET_SPEED, bullet_id)
                 bullets[bullet_id] = bullet
 
     # Quit key check
@@ -256,7 +232,7 @@ def execute_input(window, ship: Ship, bullets):
             sys.exit()
 
 def main():
-    window = pygame.display.set_mode((WINDOW_WIDTH,WINDOW_HEIGHT))
+    window = pygame.display.set_mode((constants.WINDOW_WIDTH, constants.WINDOW_HEIGHT))
     pygame.display.set_caption('Mike and Parker Space Invaders')
     pygame.init()
 
@@ -277,9 +253,9 @@ def main():
         # Move cycle
         # Bullets move
         current_time = time.time()
-        if current_time - GAME_PACE > last_time:
+        if current_time - constants.GAME_PACE > last_time:
             # Clear display buffer
-            window.fill(COLOR_WHITE)
+            window.fill(constants.COLOR_WHITE)
 
             # Execute input
             execute_input(window, ship, bullets)
