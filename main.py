@@ -7,6 +7,7 @@ import constants
 import invader
 import score_box
 import ship
+import weapon
 
 bullets = {}
 globals = {
@@ -15,33 +16,6 @@ globals = {
     constants.LAST_FIRE_TIME: 0
 }
 invaders = []
-
-class Bullet:
-    x: int = 0
-    y: int = 0
-    speed: int = 0
-    window = None
-
-    def __init__(self, window, x, y, speed, id):
-        self.id = id
-        self.x = x
-        self.y = y
-        self.speed = speed
-        self.window = window
-        pygame.draw.rect(self.window, constants.COLOR_GREEN, self.getBulletRectangleDimensions())
-
-    def move(self):
-        self.y -= constants.BULLET_SPEED
-        pygame.draw.rect(self.window, constants.COLOR_GREEN, self.getBulletRectangleDimensions())
-
-    def getBulletRectangleDimensions(self):
-        return (self.x - 5, self.y - 10, 10, 20)
-
-    def getBulletBoundaries(self):
-        return (self.x - 5, self.y - 10, self.x + 5, self.y + 10)
-
-    def getBulletBottomEdge(self):
-        return self.y + 10
 
 def check_invader_hit(fleet: invader.InvaderFleet):
     if len(bullets) == 0:
@@ -83,7 +57,7 @@ def execute_input(window, spaceship: ship.Ship, bullets):
                 globals[constants.LAST_FIRE_TIME] = time.time()
                 globals[constants.BULLET_ID] += 1
                 bullet_id = globals[constants.BULLET_ID]
-                bullet = Bullet(window, spaceship.x + 20, spaceship.y - 20, constants.BULLET_SPEED, bullet_id)
+                bullet = weapon.Bullet(window, spaceship.x + 20, spaceship.y - 20, constants.BULLET_SPEED, bullet_id)
                 bullets[bullet_id] = bullet
 
     # Quit key check
