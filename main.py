@@ -20,7 +20,7 @@ invaders = []
 def check_invader_hit(fleet: invader.InvaderFleet):
     if len(bullets) == 0:
         return
-    bullet_to_remove = None
+    bullet_to_remove: int = None
     for id in bullets:
         invader_hit = fleet.check_invader_hit(bullets[id].getBulletBoundaries())
         if invader_hit:

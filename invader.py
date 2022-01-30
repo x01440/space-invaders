@@ -8,6 +8,7 @@ import constants
 class Invader:
     alive: bool = False
     current_image_shown: int
+    exploding: bool = False
     images = []
     image_switch_time = 1 # Switch once per second
     last_timer: int = 0
@@ -41,9 +42,11 @@ class Invader:
     def explode(self):
         # Do explosion effect
         self.alive = False
+        self.exploding = True
 
 class InvaderFleet:
     direction: int = constants.INVADER_SPEED
+    explosion_image = None
     fleet_offset: int = constants.INVADER_START_OFFSET
     images = []
     invaders = []
@@ -53,6 +56,7 @@ class InvaderFleet:
     window = None
 
     def __init__(self, window: pygame.Surface, rows: int, num_per_row: int):
+        self.explosion_image = pygame.image.load(os.path.join('img', 'explosion.jpg'))
         self.invader_rows = rows
         self.invader_num_per_row = num_per_row
         self.images.append(pygame.image.load(os.path.join('img', 'invader1-1.png')))
